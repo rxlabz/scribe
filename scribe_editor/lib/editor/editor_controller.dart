@@ -1,135 +1,140 @@
-import 'package:flutter/services.dart';
+import 'dart:math';
+
 import 'package:flutter/widgets.dart';
 import 'package:scribe_lib/scribe_lib.dart';
 
 class CharacterEditorController extends ChangeNotifier {
-  String _character;
+  final Character _character;
 
-  String get character => _character;
+  final ValueChanged<Character> onSegmentUpdate;
 
-  final TextEditingController characterFieldController =
-      TextEditingController();
+  final List<EditableSegment> _segments;
 
-  final TextEditingController fontController = TextEditingController();
+  List<EditableSegment> get segments => List.unmodifiable(_segments);
 
-  CurvePoint? _currentPoint;
+  int? _selectedSegmentIndex;
+  int? get selectedLayerIndex => _selectedSegmentIndex;
 
-  CurvePoint? get currentPoint => _currentPoint;
-
-  CurvePoint? previousPoint;
+  /// a point selected with selec
+  CurvePoint? _selectedPoint;
+  CurvePoint? get selectedPoint => _selectedPoint;
 
   Tool _selectedTool = Tool.line;
   Tool get selectedTool => _selectedTool;
 
-  final List<EditorSegment> segments = [];
-
-  EditorSegment? selectedSegment;
-
-  int selectedCurveIndex = 0;
-
-  CurvePoint? selectedPoint;
-
-  late final AnimationController _anim;
-  AnimationController get anim => _anim;
-
-  bool initialized = false;
-
-  bool isPlaying = false;
-
-  String currentFontName = 'Quicksand';
-
-  CharacterEditorController({String initialCharacter = 'A'})
-      : _character = initialCharacter {
-    init();
+  EditableSegment? get selectedSegment {
+    final index = _selectedSegmentIndex;
+    return index != null && index < _segments.length ? _segments[index] : null;
   }
 
-  Iterable<EditorSegment> get backgroundSegments =>
-      segments.where((element) => element != selectedSegment);
+  Iterable<EditableSegment> get backgroundSegments =>
+      _segments.where((element) => element != selectedSegment);
 
-  void init() {
-    characterFieldController.text = _character;
-    characterFieldController.addListener(
-      () {
-        _character = characterFieldController.text;
-        notifyListeners();
-      },
-    );
+  CharacterEditorController(this._character, {required this.onSegmentUpdate})
+      : _segments = _character.editableSegments,
+        _selectedSegmentIndex = _character.editableSegments.isEmpty ? null : 0;
 
-    _initSegment();
-  }
+  void selectTool(Tool value) {
+    _selectedTool = value;
 
-  void initAnimation(AnimationController anim) {
-    _anim = anim;
-    initialized = true;
-  }
-
-  void animate() {
-    _anim.reset();
-    isPlaying = true;
-    _anim.forward();
     notifyListeners();
   }
 
-  void selectTool(Tool value) {
-    _currentPoint = null;
-    _selectedTool = value;
+  void addSegment() {
+    _segments.add(EditableSegment([]));
+    _selectedSegmentIndex = max(_segments.length - 1,0);
+    _selectedPoint = null;
 
-    if (value != Tool.pointer) {
-      final segment = EditorSegment.create(selectedTool);
-      selectedSegment = segment;
-      segments[selectedCurveIndex] = segment;
+    //updateCharacter();
+    notifyListeners();
+  }
+
+  void deleteSegment(EditableSegment deletedSegment) {
+    if (selectedSegment == deletedSegment) {
+      final deletedIndex = _segments.indexOf(deletedSegment);
+      _selectedSegmentIndex = _segments.length > 1
+          ? deletedIndex > 0
+              ? deletedIndex - 1
+              : deletedIndex
+          : null;
+      _selectedPoint == null;
+    }
+    _segments.removeWhere((element) => element == deletedSegment);
+
+    notifyListeners();
+  }
+
+  void selectSegment(int index) {
+    _selectedPoint = null;
+
+    _selectedSegmentIndex = index;
+
+    notifyListeners();
+  }
+
+  void onCanvasTap(
+    TapUpDetails details, {
+    required VoidCallback onFocus,
+  }) {
+    final segment = selectedSegment;
+
+    if (!_selectedTool.isSelection || segment == null) return;
+
+    try {
+      final nearPoint = segment.points.firstWhere(
+          (element) => (element.offset - details.localPosition).distance < 20);
+
+      _selectedPoint = nearPoint;
+      onFocus();
+
+      //print('_LetterCanvasState._onTap...$selectedPoint');
+    } catch (err) {
+      debugPrint('No close point');
     }
 
     notifyListeners();
   }
 
-  void _initSegment() {
-    final segment = EditorSegment.create(selectedTool);
-    selectedSegment = segment;
-    segments.add(segment);
-  }
-
   void startPoint(DragDownDetails details) {
     if (selectedSegment == null) return;
 
-    debugPrint('_LetterCanvasState._startPoint... ');
-    switch (selectedTool) {
+    switch (_selectedTool) {
       case Tool.line:
-        if (_currentPoint != null) {
-          previousPoint = currentPoint;
-        }
-        _currentPoint = CurvePoint(details.localPosition);
-        selectedSegment!.add(currentPoint!);
+        _selectedPoint = CurvePoint(details.localPosition);
+        selectedSegment!.add(_selectedPoint!);
         break;
       case Tool.cubic:
         if (selectedSegment == null) {
           _initSegment();
         }
 
-        if (currentPoint != null) {
-          previousPoint = currentPoint;
-        }
-        _currentPoint = CurvePoint(details.localPosition);
-        selectedSegment!.add(currentPoint!);
+        _selectedPoint = CurvePoint(details.localPosition);
+        selectedSegment!.add(_selectedPoint!);
         break;
       case Tool.pointer:
         break;
     }
-    debugPrint('_LetterCanvasState._startPoint...$selectedSegment ');
+
+    updateCharacter();
     notifyListeners();
   }
 
-  void updatePoint(DragUpdateDetails details) {
-    if (selectedTool.isSelection || selectedSegment == null) return;
+  void _initSegment() {
+    _segments.add(EditableSegment([]));
+    _selectedSegmentIndex = _segments.length - 1;
+  }
 
-    final point = currentPoint;
+  void updatePoint(DragUpdateDetails details) {
+    if (_selectedTool.isSelection || selectedSegment == null) return;
+
+    final point = _selectedPoint;
     if (point != null) {
-      switch (selectedTool) {
+      switch (_selectedTool) {
         case Tool.line:
-          _currentPoint = CurvePoint(details.localPosition);
+          _selectedPoint = CurvePoint(details.localPosition);
           break;
         case Tool.cubic:
-          _currentPoint = point.copyWith(
+          _selectedPoint = point.copyWith(
             anchorIn: point.offset + (point.offset - details.localPosition),
             anchorOut: details.localPosition,
           );
@@ -138,28 +143,43 @@ class CharacterEditorController extends ChangeNotifier {
           break;
       }
 
-      selectedSegment!.updateLast(currentPoint!);
+      selectedSegment!.updateLast(_selectedPoint!);
     }
+
+    updateCharacter();
     notifyListeners();
   }
 
-  void removeLastPoint() {
-    final segment = selectedSegment;
-    if (segment?.isNotEmpty != true) return;
+  void updateCharacter() => onSegmentUpdate(
+        _character.copyWith(
+          segments: _segments
+              .map((e) => Segment(path: e.svg, interval: e.interval))
+              .toList(),
+        ),
+      );
 
-    segments[selectedCurveIndex] = segment!.copyWithPoints(
-      segment.removeLast(),
-    );
-    notifyListeners();
-  }
-
-  /* TODO(rxlabz) */
   void endPoint(DragEndDetails details) {
-    if (selectedTool.isSelection) return;
+    updateCharacter();
   }
 
-  /* TODO(rxlabz) */
-  void startEditPoint(DragDownDetails details) {}
+  void movePoint(Offset offset) {
+    final segment = selectedSegment;
+    final point = _selectedPoint;
+
+    if (segment != null && point != null) {
+      final updatedPoint = point.copyWith(
+        position: point.offset + offset,
+        anchorIn: point.anchorIn + offset,
+        anchorOut: point.anchorOut + offset,
+      );
+
+      segment.replace(point, updatedPoint);
+      _selectedPoint = updatedPoint;
+    }
+
+    updateCharacter();
+    notifyListeners();
+  }
 
   void updateEditPoint(DragUpdateDetails details) {
     final segment = selectedSegment;
@@ -172,17 +192,12 @@ class CharacterEditorController extends ChangeNotifier {
       );
 
       segment.replace(point, updatedPoint);
-      selectedPoint = updatedPoint;
+      _selectedPoint = updatedPoint;
     }
 
+    updateCharacter();
     notifyListeners();
   }
-
-  /* TODO(rxlabz) */
-  void endEditPoint(DragEndDetails details) {}
-
-  /* TODO(rxlabz) */
-  void startEditAnchorIn(DragDownDetails details) {}
 
   void updateEditAnchorIn(DragUpdateDetails details) {
     final segment = selectedSegment;
@@ -192,16 +207,12 @@ class CharacterEditorController extends ChangeNotifier {
         anchorIn: point.anchorIn + details.delta,
       );
       segment.replace(point, updatedPoint);
-      selectedPoint = updatedPoint;
+      _selectedPoint = updatedPoint;
     }
+
+    updateCharacter();
     notifyListeners();
   }
-
-  /* TODO(rxlabz) */
-  void endEditAnchorIn(DragEndDetails details) {}
-
-  /* TODO(rxlabz) */
-  void startEditAnchorOut(DragDownDetails details) {}
 
   void updateEditAnchorOut(DragUpdateDetails details) {
     final segment = selectedSegment;
@@ -212,153 +223,16 @@ class CharacterEditorController extends ChangeNotifier {
       );
 
       segment.replace(point, updatedPoint);
-      selectedPoint = updatedPoint;
-    }
-    notifyListeners();
-  }
-
-  /* TODO(rxlabz) */
-  void endEditAnchorOut(DragEndDetails details) {}
-
-  void onClear() {
-    segments.clear();
-
-    selectedPoint = null;
-    isPlaying = false;
-    _currentPoint = null;
-    selectedSegment?.clear();
-
-    addLayer();
-
-    notifyListeners();
-  }
-
-  void savePath() {
-    final segment = selectedSegment;
-    if (segment?.isNotEmpty != true) return;
-
-    Clipboard.setData(ClipboardData(text: selectedSegment!.svg));
-  }
-
-  void saveCharacter() {
-    if (segments.isEmpty) return;
-
-    final svgSegments =
-        segments.where((element) => element.isNotEmpty).map((e) => e.svg);
-
-    final data = ''' const char_${characterFieldController.text} = Character(
-  '${characterFieldController.text}',
-  duration: 2,
-  segments: [
-    ${svgSegments.map((e) => "Segment(path:'$e',interval:Tuple2(0,1),),").join('\n')}
-  ],
-);''';
-
-    Clipboard.setData(ClipboardData(text: data));
-  }
-
-  void addLayer() {
-    segments.add(EditorSegment.create(selectedTool));
-    selectedCurveIndex = segments.length - 1;
-    selectedSegment = segments[segments.length - 1];
-    selectedPoint = null;
-    _currentPoint = null;
-
-    notifyListeners();
-  }
-
-  void selectLayer(int index) {
-    selectedPoint = null;
-    _currentPoint = null;
-
-    selectedCurveIndex = index;
-    selectedSegment = segments[index];
-
-    notifyListeners();
-  }
-
-  void onCanvasTap(
-    TapUpDetails details, {
-    required VoidCallback onFocus,
-  }) {
-    final segment = selectedSegment;
-
-    if (!selectedTool.isSelection || segment == null) return;
-
-    try {
-      final nearPoint = segment.points.firstWhere(
-          (element) => (element.offset - details.localPosition).distance < 20);
-
-      selectedPoint = nearPoint;
-      onFocus();
-
-      //print('_LetterCanvasState._onTap...$selectedPoint');
-    } catch (err) {
-      debugPrint('No close point');
+      _selectedPoint = updatedPoint;
     }
 
+    updateCharacter();
     notifyListeners();
   }
 
-  void deleteSegment(EditorSegment deletedCurve) {
-    if (selectedSegment == deletedCurve) {
-      selectedSegment = null;
-      selectedPoint == null;
-      _currentPoint = null;
-    }
-    segments.removeWhere((element) => element == deletedCurve);
-
-    notifyListeners();
-  }
-
-  void step(Offset offset) {
-    if (!selectedTool.isSelection) return;
-
-    final segment = selectedSegment;
-    final point = selectedPoint;
-    if (segment != null && point != null) {
-      final updatedPoint = point.copyWith(
-        position: point.offset + offset,
-        anchorIn: point.anchorIn + offset,
-        anchorOut: point.anchorOut + offset,
-      );
-
-      segment.replace(point, updatedPoint);
-      selectedPoint = updatedPoint;
-    }
-    notifyListeners();
-  }
-
-  void jump(Offset offset) {
-    if (!selectedTool.isSelection) return;
-
-    final segment = selectedSegment;
-    final point = selectedPoint;
-    if (segment != null && point != null) {
-      Offset delta = Offset.zero;
-
-      delta = offset;
-
-      final updatedPoint = point.copyWith(
-        position: point.offset + delta,
-        anchorIn: point.anchorIn + delta,
-        anchorOut: point.anchorOut + delta,
-      );
-
-      segment.replace(point, updatedPoint);
-      selectedPoint = updatedPoint;
-    }
-    notifyListeners();
-  }
-
-  FocusNode? _focusNode;
-
-  initFocus(FocusNode focus) {
-    _focusNode = focus;
-  }
-
-  void updateSegmentInterval(int index, EditorSegment segment) {
-    segments.replaceRange(index, index + 1, [segment]);
+  void updateSegmentInterval(int index, EditableSegment segment) {
+    _segments.replaceRange(index, index + 1, [segment]);
+    updateCharacter();
     notifyListeners();
   }
 }

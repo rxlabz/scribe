@@ -78,7 +78,7 @@ class CurvePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CurvePainter oldDelegate) =>
-      listEquals(curve, oldDelegate.curve);
+      !listEquals(curve, oldDelegate.curve);
 
   void drawCurrentPoint(Canvas canvas, CurvePoint point) {
     canvas.drawCircle(point.offset, 6, fill1);
@@ -126,7 +126,7 @@ class CurvesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CurvesPainter oldDelegate) =>
-      listEquals(curves.toList(), oldDelegate.curves.toList());
+      !listEquals(curves.toList(), oldDelegate.curves.toList());
 
   void drawCurrentPoint(Canvas canvas, CurvePoint point) {
     canvas.drawCircle(point.offset, 6, fill1);

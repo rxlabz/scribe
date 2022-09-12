@@ -12,7 +12,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final tts = await initTTS(
-      voice: kIsWeb ? null : {"name": "Amélie", "locale": "fr-CA"});
+    voice: kIsWeb ? null : {"name": "Amélie", "locale": "fr-CA"},
+  );
 
   runApp(Provider.value(value: tts, child: const App()));
 }

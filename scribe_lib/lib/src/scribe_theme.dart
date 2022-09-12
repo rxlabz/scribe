@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 
+const defautlFontName = 'Quicksand';
+
 final mainTheme = ThemeData.from(
   colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.cyan, primary: Colors.cyan.shade600),
+    seedColor: Colors.cyan,
+    primary: Colors.cyan.shade600,
+  ),
   useMaterial3: true,
 ).copyWith(
+  scaffoldBackgroundColor: Colors.cyan.shade600,
+  appBarTheme: AppBarTheme(surfaceTintColor: Colors.white),
+  cardTheme: CardTheme(
+    shape: RoundedRectangleBorder(),
+    color: Colors.white,
+    surfaceTintColor: null,
+  ),
   extensions: <ThemeExtension<dynamic>>{
     ScribeThemeData(),
   },

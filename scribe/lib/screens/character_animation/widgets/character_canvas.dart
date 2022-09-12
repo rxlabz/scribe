@@ -49,7 +49,11 @@ class AnimatedCharacterState extends State<AnimatedCharacter>
   /// instanciate a new [AnimationController] and a new [CharacterAnimationController]
   ///
   void initCharacter(Character char) {
-    _anim = AnimationController(duration: char.duration, vsync: this);
+    _anim = AnimationController(
+      duration: Duration(milliseconds: char.duration),
+      vsync: this,
+    );
+
     controller = CharacterAnimationController(char, _anim);
 
     canvasController =

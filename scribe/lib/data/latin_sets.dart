@@ -3,7 +3,7 @@
 import 'package:scribe_lib/scribe_lib.dart';
 import 'package:tuple/tuple.dart';
 
-final latinSet = CharacterSetGroup(
+const latinSet = CharacterSetGroup(
   /* TODO(rxlabz) i18n*/
   name: 'Latin',
   variants: [

@@ -77,6 +77,8 @@ class SvgCommand<T> {
 
   final List<T> points;
 
+  bool get isCubic => type == SvgCommandType.cubic;
+
   const SvgCommand(this.type, this.points);
 
   @override

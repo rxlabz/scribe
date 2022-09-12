@@ -1,6 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:quiver/iterables.dart';
 import 'package:scribe_lib/scribe_lib.dart';
 
 import '../editor_controller.dart';
@@ -10,51 +11,63 @@ class LayerListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<CharacterEditorController>();
+    final controller = context.read<CharacterEditorController>();
 
     return Container(
+      constraints: BoxConstraints.loose(const Size(240, double.infinity)),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
+          left: BorderSide(color: Colors.grey.shade300),
           right: BorderSide(color: Colors.grey.shade300),
         ),
       ),
-      child: SizedBox(
-        width: 240,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            NewLayerButton(onTap: controller.addLayer),
-            Expanded(
-              child: ReorderableListView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _NewLayerButton(onTap: controller.addSegment),
+          Expanded(
+            child: Selector<CharacterEditorController, List<EditableSegment>>(
+              selector: (context, controller) => controller.segments,
+              builder: (context, segments, _) => ReorderableListView.builder(
+                itemCount: math.max(segments.length, 1),
                 buildDefaultDragHandles: false,
-                children: enumerate(controller.segments)
-                    .map(
-                      (e) => SegmentLayerTile(
-                        e.value.points,
-                        index: e.index,
-                        selected: e.index == controller.selectedCurveIndex,
-                        onDeleteSegment: () =>
-                            controller.deleteSegment(e.value),
-                        onSelection: () => controller.selectLayer(e.index),
-                        key: ValueKey(e),
-                      ),
-                    )
-                    .toList(),
+                itemBuilder: (context, index) {
+                  if (segments.isEmpty) {
+                    return _SegmentLayerTile(
+                      index: index,
+                      selected: true,
+                      onDeleteSegment: () {},
+                      onSelection: () {},
+                      deletable: false,
+                      key: const Key('Empty segment'),
+                    );
+                  }
+
+                  final segment = segments[index];
+                  return _SegmentLayerTile(
+                    index: index,
+                    selected: index == controller.selectedLayerIndex,
+                    onDeleteSegment: () => controller.deleteSegment(segment),
+                    onSelection: () => controller.selectSegment(index),
+                    deletable: segments.length > 1,
+                    key: ValueKey(segment),
+                  );
+                },
                 onReorder: (_, __) {},
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class NewLayerButton extends StatelessWidget {
+class _NewLayerButton extends StatelessWidget {
   final VoidCallback onTap;
 
-  const NewLayerButton({Key? key, required this.onTap}) : super(key: key);
+  const _NewLayerButton({Key? key, required this.onTap}) : super(key: key);
 
   @override
   Widget build(BuildContext context) => Container(
@@ -75,17 +88,17 @@ class NewLayerButton extends StatelessWidget {
       );
 }
 
-class SegmentLayerTile extends StatelessWidget {
+class _SegmentLayerTile extends StatelessWidget {
   final int index;
-  final List<CurvePoint> segment;
   final bool selected;
+  final bool deletable;
   final VoidCallback onDeleteSegment;
   final VoidCallback onSelection;
 
-  const SegmentLayerTile(
-    this.segment, {
+  const _SegmentLayerTile({
     required this.index,
     required this.selected,
+    required this.deletable,
     required this.onDeleteSegment,
     required this.onSelection,
     Key? key,
@@ -118,10 +131,11 @@ class SegmentLayerTile extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
-                icon: Icon(Icons.delete, color: Colors.orange.shade300),
-                onPressed: onDeleteSegment,
-              ),
+              if (deletable)
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.orange.shade300),
+                  onPressed: onDeleteSegment,
+                ),
             ],
           ),
         ),

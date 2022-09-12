@@ -3,13 +3,22 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:quiver/iterables.dart';
+import 'package:scribe_lib/scribe_lib.dart';
 import 'package:tuple/tuple.dart';
 
-import '../utils/curve_utils.dart';
+const defaultInterval = Tuple2(0.0, 1.0);
 
 const pointHandleWidth = 12.0;
 
 const anchorHandleWidth = 8.0;
+
+enum Tool {
+  line,
+  cubic,
+  pointer;
+
+  bool get isSelection => this == Tool.pointer;
+}
 
 String curveToSVGPath(List<CurvePoint> curve) {
   if (curve.isEmpty) return '';
@@ -49,34 +58,19 @@ String lineToPath(List<CurvePoint> curve) {
   return path;
 }
 
-enum Tool { line, cubic, pointer }
-
-extension ToolHelpers on Tool {
-  bool get isSelection => this == Tool.pointer;
-}
-
-const defaultInterval = Tuple2(0.0, 1.0);
-
-class EditorSegment {
-  /// duration in milliseconds
-  final int duration;
-
+class EditableSegment {
   final Tuple2<double, double> _interval;
   Tuple2<double, double> get interval => _interval;
 
   final List<CurvePoint> _points;
 
-  List<CurvePoint> get points => _points /*List.unmodifiable(_points)*/;
-
-  /// maybe useless, but could be used for character dot drawing ex:"i" ?
-  @Deprecated('à priori inutile')
-  final Tool tool;
+  List<CurvePoint> get points => List.unmodifiable(_points);
 
   bool get isEmpty => _points.isEmpty;
 
   bool get isNotEmpty => _points.isNotEmpty;
 
-  String get svg {
+  /* FIXME(rxlabz) add tool to point to export better SVG
     switch (tool) {
       case Tool.line:
         return lineToPath(_points);
@@ -85,38 +79,23 @@ class EditorSegment {
       default:
         throw Exception('Invalid segment.tool : $tool');
     }
+  }*/
+  String get svg => curveToSVGPath(_points);
+
+  EditableSegment(
+    List<CurvePoint> points, {
+    Tuple2<double, double> interval = defaultInterval,
+  })  : _points = List<CurvePoint>.from(points),
+        _interval = interval;
+
+  factory EditableSegment.from(Segment segment) {
+    return EditableSegment(segment.pathPoints, interval: segment.interval);
   }
 
-  const EditorSegment._(
-    this._points,
-    this.tool, {
+  const EditableSegment._(
+    this._points, {
     Tuple2<double, double> interval = defaultInterval,
-    this.duration = 3000,
   }) : _interval = interval;
-
-  factory EditorSegment.create(Tool tool) {
-    switch (tool) {
-      case Tool.cubic:
-        return EditorSegment.cubic([]);
-      case Tool.line:
-      default:
-        return EditorSegment.line([]);
-    }
-  }
-
-  const EditorSegment.line(
-    this._points, {
-    Tuple2<double, double> interval = defaultInterval,
-    this.duration = 3000,
-  })  : tool = Tool.line,
-        _interval = interval;
-
-  const EditorSegment.cubic(
-    this._points, {
-    Tuple2<double, double> interval = defaultInterval,
-    this.duration = 3000,
-  })  : tool = Tool.cubic,
-        _interval = interval;
 
   void clear() => _points.clear();
 
@@ -131,22 +110,27 @@ class EditorSegment {
 
   List<CurvePoint> removeLast() => _points..removeLast();
 
-  EditorSegment copyWithPoints(List<CurvePoint> points) =>
-      EditorSegment._(points, tool, interval: _interval);
+  EditableSegment copyWithPoints(List<CurvePoint> points) =>
+      EditableSegment._(points, /*tool,*/ interval: _interval);
 
-  EditorSegment copyWithInterval(double start, double end) =>
-      EditorSegment._(_points, tool, interval: Tuple2(start, end));
+  EditableSegment copyWithInterval(double start, double end) =>
+      EditableSegment._(_points, /*tool,*/ interval: Tuple2(start, end));
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is EditorSegment &&
+      other is EditableSegment &&
           runtimeType == other.runtimeType &&
-          listEquals(points, other.points) &&
-          tool == other.tool;
+          interval == other.interval &&
+          listEquals(_points, other.points);
 
   @override
-  int get hashCode => points.hashCode ^ tool.hashCode;
+  int get hashCode => _points.hashCode ^ interval.hashCode;
+
+  @override
+  String toString() {
+    return 'EditableSegment{ $svg _interval: $_interval, _points: ${_points}}';
+  }
 }
 
 extension on CurvePoint {

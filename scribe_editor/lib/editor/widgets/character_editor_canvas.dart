@@ -21,21 +21,21 @@ class EditorShortcuts extends StatelessWidget {
       child: CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): () =>
-              controller.jump(const Offset(0, -10)),
+              controller.movePoint(const Offset(0, -10)),
           const SingleActivator(LogicalKeyboardKey.arrowDown, shift: true):
-              () => controller.jump(const Offset(0, 10)),
+              () => controller.movePoint(const Offset(0, 10)),
           const SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true):
-              () => controller.jump(const Offset(-10, 0)),
+              () => controller.movePoint(const Offset(-10, 0)),
           const SingleActivator(LogicalKeyboardKey.arrowRight, shift: true):
-              () => controller.jump(const Offset(10, 0)),
+              () => controller.movePoint(const Offset(10, 0)),
           const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
-              controller.step(const Offset(0, -1)),
+              controller.movePoint(const Offset(0, -1)),
           const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
-              controller.step(const Offset(0, 1)),
+              controller.movePoint(const Offset(0, 1)),
           const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
-              controller.step(const Offset(-1, 0)),
+              controller.movePoint(const Offset(-1, 0)),
           const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
-              controller.step(const Offset(1, 0)),
+              controller.movePoint(const Offset(1, 0)),
         },
         child: child,
       ),
@@ -58,8 +58,7 @@ class CharacterEditorCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<CharacterEditorController>()
-      ..initFocus(focus);
+    final controller = context.watch<CharacterEditorController>();
 
     return Focus(
       focusNode: focus,
@@ -74,28 +73,15 @@ class CharacterEditorCanvas extends StatelessWidget {
           child: Stack(
             children: [
               ...backgroundLayers,
-              // animated curves
-              if (controller.isPlaying && controller.selectedSegment != null)
-                AnimatedBuilder(
-                  animation: controller.anim,
-                  builder: (context, snapshot) => CustomPaint(
-                    size: canvasSize,
-                    painter: AnimatedSegmentsPainter(
-                      controller.selectedSegment!.points,
-                      controller.anim.value,
-                    ),
-                  ),
-                ),
-              // courbes/layers non sélectionnés
+              // not selected layers
               if (controller.backgroundSegments.isNotEmpty)
                 CustomPaint(
                   size: canvasSize,
                   painter: CurvesPainter(
-                    controller.segments.map((e) => e.points),
+                    controller.backgroundSegments.map((e) => e.points),
                   ),
                 ),
-
-              // courbe sélectionnée
+              // selectedLayer
               GestureDetector(
                 onTapUp: (details) => controller.onCanvasTap(
                   details,
@@ -107,7 +93,7 @@ class CharacterEditorCanvas extends StatelessWidget {
                 child: CustomPaint(
                   size: canvasSize,
                   painter: CurvePainter(
-                    controller.currentPoint ?? controller.selectedPoint,
+                    controller.selectedPoint,
                     controller.selectedSegment?.points ?? [],
                   ),
                 ),
@@ -121,9 +107,10 @@ class CharacterEditorCanvas extends StatelessWidget {
                   top: controller.selectedPoint!.offset.dy -
                       (pointHandleWidth / 2),
                   child: GestureDetector(
-                    onPanDown: controller.startEditPoint,
                     onPanUpdate: controller.updateEditPoint,
+                    /*onPanDown: controller.startEditPoint,
                     onPanEnd: controller.endEditPoint,
+                    * */
                     child: EditablePointHandle(controller.selectedPoint!),
                   ),
                 ),
@@ -141,9 +128,9 @@ class CharacterEditorCanvas extends StatelessWidget {
                     top: controller.selectedPoint!.anchorIn.dy -
                         (anchorHandleWidth / 2),
                     child: GestureDetector(
-                      onPanDown: controller.startEditAnchorIn,
                       onPanUpdate: controller.updateEditAnchorIn,
-                      onPanEnd: controller.endEditAnchorIn,
+                      /*onPanDown: controller.startEditAnchorIn,
+                      onPanEnd: controller.endEditAnchorIn,*/
                       child: EditableAnchorHandle(controller.selectedPoint!),
                     ),
                   ),
@@ -161,9 +148,9 @@ class CharacterEditorCanvas extends StatelessWidget {
                     top: controller.selectedPoint!.anchorOut.dy -
                         (anchorHandleWidth / 2),
                     child: GestureDetector(
-                      onPanDown: controller.startEditAnchorOut,
                       onPanUpdate: controller.updateEditAnchorOut,
-                      onPanEnd: controller.endEditAnchorOut,
+                      /*onPanDown: controller.startEditAnchorOut,
+                      onPanEnd: controller.endEditAnchorOut,*/
                       child: EditableAnchorHandle(controller.selectedPoint!),
                     ),
                   ),

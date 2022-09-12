@@ -1,66 +1,82 @@
-import 'package:basics/basics.dart';
 import 'package:flutter/painting.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:quiver/iterables.dart';
 import 'package:tuple/tuple.dart';
 
+import '../scribe_theme.dart';
 import '../svg.dart';
 import 'editor_model.dart';
 
+part 'character.freezed.dart';
+part 'character.g.dart';
+
 const defaultStrokeWidth = 60;
-
-/// group of characters sets
-/// ex: Latin with 2 variants : uppercase & lowercase
-class CharacterSetGroup {
-  final String name;
-  final List<CharacterSet> variants;
-
-  CharacterSetGroup({required this.name, required this.variants});
-}
-
-/// list of characters
-class CharacterSet {
-  final String name;
-  final List<Character> characters;
-
-  CharacterSet({required this.name, required this.characters});
-
-  Character operator [](int index) => characters[index];
-}
 
 /// description of a character represented by a [symbol] ( glyphe? )
 /// contains a list of [segments] to draw it,
 /// and defines the duration of its drawing animation
 /// Each segment is animated duting a partial interval of this [duration]
-///
-class Character {
-  final String symbol;
+@freezed
+class Character with _$Character {
+  const Character._();
 
-  final List<Segment> segments;
+  const factory Character(
+    String symbol, {
+    required List<Segment> segments,
+    @Default(4000) int duration,
+  }) = _Character;
 
-  final int _durationInSec;
+  factory Character.fromJson(Map<String, dynamic> json) =>
+      _$CharacterFromJson(json);
 
-  Duration get duration => _durationInSec.seconds;
-
-  const Character(
-    this.symbol, {
-    required this.segments,
-    int duration = 4,
-  }) : _durationInSec = duration;
-
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'character': symbol,
-        'duration': _durationInSec,
-        'segments': segments.map((e) => e.toJson()).toList()
-      };
+  List<EditableSegment> get editableSegments =>
+      segments.map<EditableSegment>((e) => EditableSegment.from(e)).toList();
 }
 
-/// a segment defined with a path and an [interval] during which
-/// it is drawn
-class Segment {
-  final String path;
+/// group of characters sets
+/// ex: Latin with 2 variants : uppercase & lowercase
+@freezed
+class CharacterSetGroup with _$CharacterSetGroup {
+  const factory CharacterSetGroup({
+    required String name,
+    required List<CharacterSet> variants,
+  }) = _CharacterSetGroup;
 
-  /// interval pendant lequel se joue l'animation de ce segment
-  final Tuple2<double, double> interval;
+  factory CharacterSetGroup.fromJson(Map<String, dynamic> json) =>
+      _$CharacterSetGroupFromJson(json);
+}
+
+@freezed
+class CharacterSet with _$CharacterSet {
+  const CharacterSet._();
+
+  const factory CharacterSet({
+    required String name,
+    required List<Character> characters,
+    @Default(defautlFontName) String fontName,
+  }) = _CharacterSet;
+
+  factory CharacterSet.fromJson(Map<String, dynamic> json) =>
+      _$CharacterSetFromJson(json);
+
+  Character operator [](int index) => characters[index];
+
+  bool get isEmpty => characters.isEmpty;
+}
+
+
+@freezed
+class Segment with _$Segment {
+  const Segment._();
+
+  const factory Segment({
+    required String path,
+    @JsonKey(fromJson: tuple2FromJson, toJson: tuple2ToJson)
+        required Tuple2<double, double> interval,
+  }) = _Segment;
+
+  factory Segment.fromJson(Map<String, dynamic> json) =>
+      _$SegmentFromJson(json);
 
   List<SvgCommand<Offset>> get pathCommands => parseSvgPath(path);
 
@@ -112,18 +128,15 @@ class Segment {
     return points;
   }
 
-  const Segment({
-    required this.path,
-    required this.interval,
-  });
-
   Segment copyWithEndPoint(Offset point) => Segment(
         path: path,
         interval: interval,
       );
-
-  Map<String, dynamic> toJson() => {
-        'path': path,
-        'interval': [interval.item1, interval.item2],
-      };
 }
+
+Tuple2<double, double> tuple2FromJson(List<double> value) =>
+    value.length == 2 ? Tuple2(value.first, value.last) : Tuple2(0, 1);
+
+List<double> tuple2ToJson(Tuple2<double, double> value) =>
+    [value.item1, value.item2];
+
