@@ -1,0 +1,28 @@
+PODS:
+  - flutter_tts (0.0.1):
+    - FlutterMacOS
+  - FlutterMacOS (1.0.0)
+  - path_provider_macos (0.0.1):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - flutter_tts (from `Flutter/ephemeral/.symlinks/plugins/flutter_tts/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - path_provider_macos (from `Flutter/ephemeral/.symlinks/plugins/path_provider_macos/macos`)
+
+EXTERNAL SOURCES:
+  flutter_tts:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_tts/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  path_provider_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_macos/macos
+
+SPEC CHECKSUMS:
+  flutter_tts: 64651204e5d276ffea5a910f942d5e9785a96085
+  FlutterMacOS: ae6af50a8ea7d6103d888583d46bd8328a7e9811
+  path_provider_macos: 3c0c3b4b0d4a76d2bf989a913c2de869c5641a19
+
+PODFILE CHECKSUM: 8d40c19d3cbdb380d870685c3a564c989f1efa52
+
+COCOAPODS: 1.11.2

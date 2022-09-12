@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/scribe/scribe.iml" filepath="$PROJECT_DIR$/scribe/scribe.iml" />
+      <module fileurl="file://$PROJECT_DIR$/scribe_editor/scribe_editor.iml" filepath="$PROJECT_DIR$/scribe_editor/scribe_editor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/scribe_lib/scribe_lib.iml" filepath="$PROJECT_DIR$/scribe_lib/scribe_lib.iml" />
+    </modules>
+  </component>
+</project>

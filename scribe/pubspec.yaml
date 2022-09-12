@@ -1,0 +1,33 @@
+name: scribe
+description: Character tracing
+
+publish_to: 'none'
+
+version: 1.0.0
+
+environment:
+  sdk: '>=2.18.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_tts: ^3.5.1
+  tuple: ^2.0.0
+  basics: ^0.9.0
+  quiver: ^3.1.0
+  google_fonts: ^3.0.1
+  freezed_annotation: ^2.1.0
+  provider: ^6.0.2
+  scribe_lib:
+    path: ../scribe_lib
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  freezed: ^2.1.0+1
+  flutter_lints: ^2.0.1
+
+flutter:
+  uses-material-design: true
