@@ -71,6 +71,7 @@ class CharacterAnimationController {
   void _updateHelpersVisibility(bool newValue) => showHelpers.value = newValue;
 
   void start({bool previewMode = true}) {
+    print('CharacterAnimationController.start... ');
     _segmentIndex = 0;
 
     if (character.segments.length > 1) {

@@ -6,19 +6,19 @@ publish_to: 'none'
 version: 1.0.0
 
 environment:
-  sdk: '>=2.18.0 <3.0.0'
+  sdk: ">=2.19.3 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  flutter_tts: ^3.5.1
-  tuple: ^2.0.0
-  basics: ^0.9.0
-  quiver: ^3.1.0
-  google_fonts: ^3.0.1
-  freezed_annotation: ^2.1.0
-  provider: ^6.0.2
+  flutter_tts: ^3.6.3
+  tuple: ^2.0.1
+  basics: ^0.10.0
+  quiver: ^3.2.1
+  google_fonts: ^4.0.3
+  freezed_annotation: ^2.2.0
+  provider: ^6.0.5
   scribe_lib:
     path: ../scribe_lib
 
@@ -26,7 +26,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  freezed: ^2.1.0+1
+  freezed: ^2.3.2
   flutter_lints: ^2.0.1
 
 flutter:

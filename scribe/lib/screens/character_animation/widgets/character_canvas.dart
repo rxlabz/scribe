@@ -50,7 +50,7 @@ class AnimatedCharacterState extends State<AnimatedCharacter>
   ///
   void initCharacter(Character char) {
     _anim = AnimationController(
-      duration: Duration(milliseconds: char.duration),
+      duration: Duration(seconds: char.duration),
       vsync: this,
     );
 

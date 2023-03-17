@@ -67,6 +67,7 @@ class MenuScreen extends StatelessWidget {
                       builder: (_) => CharacterAnimationScreen(
                         latinSet.variants.first,
                         mute: false,
+                        autoPlay: false,
                       ),
                     ),
                   ),
@@ -88,7 +89,7 @@ class MenuScreen extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => CharacterAnimationScreen(
+                  builder: (_) => const CharacterAnimationScreen(
                     digitSet,
                     mute: false,
                   ),

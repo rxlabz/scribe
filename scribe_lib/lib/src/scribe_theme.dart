@@ -5,7 +5,7 @@ const defautlFontName = 'Quicksand';
 final mainTheme = ThemeData.from(
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.cyan,
-    primary: Colors.cyan.shade600,
+    primary: Colors.cyan.shade700,
   ),
   useMaterial3: true,
 ).copyWith(

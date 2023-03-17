@@ -1,7 +1,7 @@
 import 'package:scribe_lib/scribe_lib.dart';
 import 'package:tuple/tuple.dart';
 
-final digitSet = CharacterSet(name: 'Digits', characters: [
+const digitSet = CharacterSet(name: 'Digits', characters: [
   char_1,
   char_2,
   char_3,
